@@ -1,0 +1,5 @@
+model,macro_f1
+FINAL: XGBoost (tuned),0.8464274711472587
+dummy (majority class),0.05452197618250514
+"starting point: RF balanced, 19 features",0.8343578692679647
+"default RF, 14 raw features",0.8430499696363344

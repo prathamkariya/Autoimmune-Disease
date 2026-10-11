@@ -1,0 +1,9 @@
+model,features,n_features,macro_f1,weighted_f1,accuracy,fit_seconds,eval_set
+Random Forest,ext,19,0.8074,0.8217,0.8226,1.1,validation split of training data (n=1934)
+XGBoost,ext,19,0.8048,0.8187,0.8185,2.1,validation split of training data (n=1934)
+Gradient Boosting,ext,19,0.8044,0.8144,0.8144,38.6,validation split of training data (n=1934)
+Gradient Boosting,raw,14,0.8019,0.8159,0.8154,25.7,validation split of training data (n=1934)
+Random Forest,raw,14,0.7982,0.8147,0.817,1.1,validation split of training data (n=1934)
+XGBoost,raw,14,0.7847,0.7968,0.7963,2.0,validation split of training data (n=1934)
+Logistic Regression,ext,19,0.7842,0.7991,0.7947,0.2,validation split of training data (n=1934)
+Logistic Regression,raw,14,0.7781,0.7923,0.7885,0.2,validation split of training data (n=1934)

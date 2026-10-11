@@ -1,0 +1,36 @@
+disease,rank,measurement,mean_abs_shap,rho_value_vs_shap,direction
+Ankylosing Spondylitis,1,CRP,1.0585442,0.8162706244155525,↑ higher value raises score
+Ankylosing Spondylitis,2,HLA-B27,1.0553784,0.8436770214935233,↑ higher value raises score
+Ankylosing Spondylitis,3,ESR,0.96209,0.43187403627921944,↑ higher value raises score
+Ankylosing Spondylitis,4,Anti-CCP,0.08543133,-0.7459351996170657,↓ higher value lowers score
+Ankylosing Spondylitis,5,ANA,0.06869787,-0.8171453212124565,↓ higher value lowers score
+Normal,1,ESR,1.154276,-0.892500843572509,↓ higher value lowers score
+Normal,2,Anti-CCP,1.0901197,-0.8140956190286062,↓ higher value lowers score
+Normal,3,RF,1.0635867,-0.74763093133185,↓ higher value lowers score
+Normal,4,CRP,0.9497803,-0.8611758253845425,↓ higher value lowers score
+Normal,5,ANA,0.3284822,-0.8348069455783849,↓ higher value lowers score
+Psoriatic Arthritis,1,RF,1.1457132,-0.8502475651876166,↓ higher value lowers score
+Psoriatic Arthritis,2,ESR,1.0459795,0.9078566673980921,↑ higher value raises score
+Psoriatic Arthritis,3,Anti-CCP,1.0049242,-0.8631675535745932,↓ higher value lowers score
+Psoriatic Arthritis,4,CRP,0.94513726,0.8271389896884989,↑ higher value raises score
+Psoriatic Arthritis,5,HLA-B27,0.2817582,-0.8436770220915424,↓ higher value lowers score
+Reactive Arthritis,1,ESR,1.5133153,-0.4337801831410012,↓ higher value lowers score
+Reactive Arthritis,2,CRP,1.1965026,-0.3752369100067722,↓ higher value lowers score
+Reactive Arthritis,3,HLA-B27,0.64716077,0.8436770217925328,↑ higher value raises score
+Reactive Arthritis,4,Age,0.067088574,0.7200670107100895,↑ higher value raises score
+Reactive Arthritis,5,C4,0.057839554,0.2498343220282498,mixed / non-monotonic
+Rheumatoid Arthritis,1,Anti-CCP,1.3261038,0.8470728914932456,↑ higher value raises score
+Rheumatoid Arthritis,2,RF,1.3251064,0.8368893177201463,↑ higher value raises score
+Rheumatoid Arthritis,3,ESR,0.80565166,0.8597442202412959,↑ higher value raises score
+Rheumatoid Arthritis,4,CRP,0.45485863,0.5336974254471706,↑ higher value raises score
+Rheumatoid Arthritis,5,HLA-B27,0.30392092,-0.8436770220915424,↓ higher value lowers score
+Sjögren's Syndrome,1,ESR,1.3844842,-0.7453666135464121,↓ higher value lowers score
+Sjögren's Syndrome,2,Anti-La,0.9359984,0.8565120986468876,↑ higher value raises score
+Sjögren's Syndrome,3,Anti-Ro,0.91090906,0.8549784770602479,↑ higher value raises score
+Sjögren's Syndrome,4,CRP,0.7781693,-0.7831538008859366,↓ higher value lowers score
+Sjögren's Syndrome,5,ANA,0.5102826,0.8348069460926634,↑ higher value raises score
+Systemic Lupus Erythematosus,1,C3,1.4408534,-0.7473782953680501,↓ higher value lowers score
+Systemic Lupus Erythematosus,2,C4,1.3861194,-0.7615086484093069,↓ higher value lowers score
+Systemic Lupus Erythematosus,3,ESR,0.49065462,-0.7348174478127011,↓ higher value lowers score
+Systemic Lupus Erythematosus,4,Anti-Sm,0.4891451,0.8656117450744947,↑ higher value raises score
+Systemic Lupus Erythematosus,5,CRP,0.45601812,-0.7337947951694272,↓ higher value lowers score

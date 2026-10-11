@@ -1,0 +1,24 @@
+{
+  "Random Forest": {
+    "source": "defaults retained (tuning not shown to help under nested CV)",
+    "params": {
+      "n_estimators": 300
+    }
+  },
+  "XGBoost": {
+    "source": "random search on the full training pool, 5-fold inner CV, 20 candidates + default",
+    "params": {
+      "colsample_bytree": 0.5702109964222462,
+      "gamma": 1,
+      "learning_rate": 0.02020431380302154,
+      "max_depth": 4,
+      "min_child_weight": 5,
+      "n_estimators": 600,
+      "reg_alpha": 0.0013859108660520538,
+      "reg_lambda": 0.9559973589036749,
+      "subsample": 0.8058757277304458
+    },
+    "inner_cv_macro_f1": 0.8253491583973138,
+    "inner_cv_macro_f1_default": 0.8166315973690272
+  }
+}

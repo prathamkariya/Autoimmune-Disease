@@ -1,0 +1,11 @@
+{
+  "test_macro_f1": 0.8464274711472587,
+  "test_macro_f1_ci95": [
+    0.8293860456987164,
+    0.8619923211325273
+  ],
+  "test_accuracy": 0.8527099710384775,
+  "within_expected_range": false,
+  "n_test": 2417,
+  "evaluated_utc": "2026-10-04 13:06:24"
+}

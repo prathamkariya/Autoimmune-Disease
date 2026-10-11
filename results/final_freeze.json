@@ -1,0 +1,44 @@
+{
+  "created_utc": "2026-10-04 13:06:01",
+  "model": "XGBoost",
+  "params": {
+    "colsample_bytree": 0.5702109964222462,
+    "gamma": 1,
+    "learning_rate": 0.02020431380302154,
+    "max_depth": 4,
+    "min_child_weight": 5,
+    "n_estimators": 600,
+    "reg_alpha": 0.0013859108660520538,
+    "reg_lambda": 0.9559973589036749,
+    "subsample": 0.8058757277304458
+  },
+  "features": "raw (14)",
+  "class_weighting": "none",
+  "primary_metric": "macro-F1",
+  "expected_test_macro_f1": {
+    "center": 0.825,
+    "low": 0.808,
+    "high": 0.842,
+    "suspicious_above": 0.845
+  },
+  "cv_estimate": {
+    "macro_f1": 0.8254,
+    "ci95": [
+      0.8168,
+      0.8336
+    ]
+  },
+  "deferral_confidence_thresholds_from_training_oof": {
+    "0.9": 0.5440298497676849,
+    "0.8": 0.6194591879844665,
+    "0.7": 0.7038491368293762,
+    "0.6": 0.833544909954071,
+    "0.5": 0.9307265877723694
+  },
+  "input_sha256": {
+    "../results/tuning_final_params.json": "0f5eff432f83b956c1c16c0bf9aecf3cb1ad50798a808819d9daeb0640ce4850",
+    "../data/processed/X_raw_train.csv": "f18229c0a3014523c5efd09cfe38c5c365b4928fd00cf1766ee402bc205d7316",
+    "../data/processed/y_train.csv": "8c9f4e5671142c3b49c0ae13e145d395b7ac227855baffcc93389e3aee895d25",
+    "../results/tune_oof.npz": "ede7626ffc847799ed73b79c61c3c2c359c49d7a3ae50562c5b6d26fabb81e86"
+  }
+}

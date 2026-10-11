@@ -1,0 +1,13 @@
+A,B,diff,ci_low,ci_high,folds_A_better,rule,passes,kind,k,model,non_inferior,superior
+Random Forest|all20,Random Forest|ext_noflags,0.0003887652931598984,-0.0032964018878395562,0.004130222359224038,4,1: literature features,False,superiority,,,,
+Random Forest|ext_noflags,Random Forest|raw,0.0014648032063725447,-0.0025703900355431688,0.005469099765241436,2,2: engineered features,False,superiority,,,,
+XGBoost|all20,XGBoost|ext_noflags,0.00030647076633671944,-0.004414216743571503,0.004839663966468651,2,1: literature features,False,superiority,,,,
+XGBoost|ext_noflags,XGBoost|raw,1.0154455570288157e-05,-0.00504007842625537,0.005155063990102127,3,2: engineered features,False,superiority,,,,
+Random Forest|top8,Random Forest|raw,-0.027542804511509145,-0.034315031182431587,-0.020800132888040807,0,,,non_inferiority,8.0,Random Forest,False,False
+XGBoost|top8,XGBoost|raw,-0.034926382656958466,-0.04223326175101631,-0.027486783725004432,0,,,non_inferiority,8.0,XGBoost,False,False
+Random Forest|top10,Random Forest|raw,-0.010623677624212013,-0.0163908792355343,-0.00499399071498582,0,,,non_inferiority,10.0,Random Forest,False,False
+XGBoost|top10,XGBoost|raw,-0.013372772385455534,-0.019336657672527957,-0.007397929548388206,1,,,non_inferiority,10.0,XGBoost,False,False
+Random Forest|top12,Random Forest|raw,-0.005916770507317759,-0.011046793457062807,-0.0006466885552525228,0,,,non_inferiority,12.0,Random Forest,False,False
+XGBoost|top12,XGBoost|raw,-0.006315172614137721,-0.012194545887479877,-0.000756985954750299,0,,,non_inferiority,12.0,XGBoost,False,False
+Random Forest|top14,Random Forest|raw,-0.0004444845264328645,-0.00546818634247134,0.004554847006496885,4,,,non_inferiority,14.0,Random Forest,False,False
+XGBoost|top14,XGBoost|raw,-0.00717539250705812,-0.013038274367561133,-0.0012837907085827968,1,,,non_inferiority,14.0,XGBoost,False,False
