@@ -106,7 +106,7 @@ Run order: 01, 01b, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12 (12 may be run af
 ### Notebook 12 — error analysis
 * Accuracy falls monotonically with the number of missing tests (0–1: 0.897; 2: 0.865; 3: 0.830; 4: 0.804; 5+: 0.754); adjusted odds ratio of an error per extra missing test 1.315, 95% CI [1.261, 1.374]. Verdict by the pre-specified rule: missing data is a main cause of the ceiling.
 * Overall error 16.1% vs 10.3% with ≤ 1 missing test: about 36% of errors are attributable to missing tests and about 64% persist even with nearly complete data (class overlap is real).
-* Cost of a missing test (error rate when missing minus when measured): ESR +13.2 points, RF +12.5, Anti-CCP +6.5, CRP +3.8, C3 / C4 / Anti-Ro / Anti-La / ANA / HLA-B27 about +2 to +3, Anti-dsDNA and Anti-Sm about 0.
+* Cost of a missing test (error rate when missing minus when measured): ESR +13.2 points, RF +12.4, Anti-CCP +6.5, CRP +3.8, C3 / C4 / Anti-Ro / Anti-La / ANA / HLA-B27 about +2 to +3, Anti-dsDNA and Anti-Sm about 0.
 * Confused pairs worsen when their key tests are missing: AS vs RA 10.9% → 25.2%; Normal vs Sjögren's 9.3% → 19.4%; AS vs PsA 8.4% → 18.6%; AS vs ReA 4.6% → 12.5% (odds ratio ≈ 1.7, Holm p ≤ 0.004). With all key tests measured, 4.6–10.9% remain confused.
 * The model knows when it is unsure: mean confidence 0.872 when right vs 0.620 when wrong. Deferring the least-confident 20% gives accuracy 0.911 / macro-F1 0.893 and removes 56% of errors (70% coverage: 0.948 / 0.930, 78% removed; 50% coverage: 0.995).
 
