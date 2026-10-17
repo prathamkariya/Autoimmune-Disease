@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🩺 Multiclass Classification of Rheumatic & Autoimmune Diseases
+# Multiclass Classification of Rheumatic & Autoimmune Diseases
 
 **A leakage-safe, statistically controlled machine-learning study: every model, decision, and metric verified.**
 
@@ -11,13 +11,13 @@
 [![XGBoost](https://img.shields.io/badge/XGBoost-3.4-1192d3)](https://xgboost.readthedocs.io/)
 [![SHAP](https://img.shields.io/badge/SHAP-0.52-ff0d57)](https://shap.readthedocs.io/)
 
-[🎯 At a Glance](#-at-a-glance) · [🧭 Key Models](#-key-models--performance) · [🔬 Results & Clinical Meaning](#-what-the-results-mean) · [🚫 What Failed](#-what-did-not-work) · [🧩 Pipeline](#-how-the-study-was-run) · [📁 Repository](#-repository) · [🧪 Reproduce](#-reproduce) · [👤 Author](#-author--license)
+[At a Glance](#at-a-glance) · [Key Models](#key-models--performance) · [Results & Findings](#what-the-results-mean) · [Negative Results](#what-did-not-work) · [Study Pipeline](#how-the-study-was-run) · [Repository](#repository-structure) · [Reproducibility](#reproduce) · [Author & License](#author--license)
 
 </div>
 
 ---
 
-## 🎯 At a Glance
+## At a Glance
 
 We evaluate multi-class diagnosis across 7 autoimmune conditions using 14 routine clinical and serological measurements from 12,085 patient records (Harvard Dataverse, DOI [10.7910/DVN/VM4OR3](https://doi.org/10.7910/DVN/VM4OR3)). Every architectural decision was determined strictly within fold-safe 5-fold cross-validation on 9,668 training patients. The 2,417-patient test set was evaluated exactly once.
 
@@ -31,29 +31,30 @@ We evaluate multi-class diagnosis across 7 autoimmune conditions using 14 routin
 
 > **Final Deployed Model:** Tuned XGBoost on 14 raw features with no class weighting (`learning_rate=0.020`, `n_estimators=600`, `max_depth=4`).
 
-### 💡 Core Takeaways
-1. 🎯 **Model Choice Hits a Ceiling:** Every well-regularized tree ensemble family lands within ~0.003 macro-F1 of one another. The ceiling is governed by clinical overlap and missing values, not classifier complexity.
-2. 📉 **Missing Tests Drive 36% of Errors:** Each missing diagnostic test increases the odds of error by **$\times 1.32$** (replicated at **$\times 1.29$** on the test set).
-3. 🛡️ **Uncertainty Deferral Works:** Rejecting the least-confident 20% of predictions eliminates **~62% of all test errors**, raising retained cohort accuracy to 93.1%.
+### Core Takeaways
+
+1. **Model Choice Hits a Ceiling:** Every well-regularized tree ensemble family lands within ~0.003 macro-F1 of one another. The ceiling is governed by clinical overlap and missing values, not classifier complexity.
+2. **Missing Tests Drive 36% of Errors:** Each missing diagnostic test increases the odds of error by **$\times 1.32$** (replicated at **$\times 1.29$** on the test set).
+3. **Uncertainty Deferral Works:** Rejecting the least-confident 20% of predictions eliminates **~62% of all test errors**, raising retained cohort accuracy to 93.1%.
 
 ---
 
-## 🧭 Key Models & Performance
+## Key Models & Performance
 
 Scores represent 5-fold cross-validation Macro-F1 (mean ± standard deviation across folds) on the 9,668 training pool.
 
-| Status | Model | Configuration | CV Macro-F1 | Test Macro-F1 | Verdict |
+| Role | Model | Configuration | CV Macro-F1 | Test Macro-F1 | Verdict |
 |:---:|---|---|:---:|:---:|---|
-| ⚪ | **Majority-Class Dummy** | Constant baseline | n/a | 0.0545 | Empirical floor |
-| 📌 | **Starting Pipeline (RF)** | Balanced weights, 19 features | 0.8175 ± 0.0081 | 0.8344 | Baseline reference point |
-| ⚡ | **Random Forest (Unweighted)** | No weights, 14 raw features | 0.8230 ± 0.0070 | 0.8430 | +0.009 gain over weighted RF |
-| ⚙️ | **XGBoost (Defaults)** | No weights, 14 raw features | 0.8174 ± 0.0057 | — | Starting point for tuning |
-| 🏆 | **XGBoost (Tuned)** | Nested CV random search | **0.8254 ± 0.0078** | **0.8464** | **Selected Final Model** (+0.0079 over default, 5/5 folds) |
-| 🔗 | **5-Model Stacking Ensemble** | Logistic regression meta-learner | 0.8260 ± 0.0051 | — | Dropped: +0.0007 over tuned XGB (not significant) |
-| 🐝 | **Swarm Optimizers (PSO/GWO/GA)** | 3,000 evaluations per optimizer | 0.8260 – 0.8283 | — | Dropped: equal budget random search scored 0.8284; over-fit inner folds |
+| Baseline | **Majority-Class Dummy** | Constant baseline | n/a | 0.0545 | Empirical floor |
+| Reference | **Random Forest (Starting Pipeline)** | Balanced weights, 19 features | 0.8175 ± 0.0081 | 0.8344 | Baseline reference point |
+| Candidate | **Random Forest (Unweighted)** | No weights, 14 raw features | 0.8230 ± 0.0070 | 0.8430 | +0.009 gain over weighted RF |
+| Candidate | **XGBoost (Defaults)** | No weights, 14 raw features | 0.8174 ± 0.0057 | — | Starting point for tuning |
+| Final | **XGBoost (Tuned)** | Nested CV random search | **0.8254 ± 0.0078** | **0.8464** | **Selected Final Model** (+0.0079 over default, 5/5 folds) |
+| Ensemble | **5-Model Stacking Ensemble** | Logistic regression meta-learner | 0.8260 ± 0.0051 | — | Dropped: +0.0007 over tuned XGB (not significant) |
+| Ensemble | **Swarm Optimizers (PSO/GWO/GA)** | 3,000 evaluations per optimizer | 0.8260 – 0.8283 | — | Dropped: equal budget random search scored 0.8284; over-fit inner folds |
 
 <details>
-<summary>🔍 <strong>View full 15-model experimental progression table</strong></summary>
+<summary><strong>View full 15-model experimental progression table</strong></summary>
 
 <br>
 
@@ -79,7 +80,7 @@ Scores represent 5-fold cross-validation Macro-F1 (mean ± standard deviation ac
 
 ---
 
-## 🔬 What the Results Mean
+## What the Results Mean
 
 ### 1. Diagnosis-by-Diagnosis Breakdown (Test Set)
 
@@ -125,7 +126,7 @@ The model exhibits strong calibration (ECE = 0.019; correct prediction mean conf
 
 ---
 
-## 📊 Visual Interpretability
+## Visual Interpretability
 
 <p align="center">
   <img src="results/shap_importance_heatmap.png" width="75%" alt="SHAP Importance Heatmap">
@@ -144,13 +145,13 @@ The model exhibits strong calibration (ECE = 0.019; correct prediction mean conf
 
 ---
 
-## 🚫 What Did NOT Work
+## What Did NOT Work
 
 Pre-specified negative findings are critical to prevent wasteful modeling iterations:
 
-1. ❌ **Class Weighting Degraded Macro-F1:** `balanced` sample weighting decreased macro-F1 (+0.009 improvement without weighting). SMOTE-NC oversampling degraded Reactive Arthritis precision to 0.52.
-2. ❌ **Engineered & Literature Features Added Zero Value:** Adding non-linear interaction terms, composite inflammatory sums, or missingness flags yielded no statistical gain (all 95% CIs cross zero). The 14 raw features proved superior.
-3. ❌ **Stacking & Swarm Ensembles Failed to Generalize:** A 5-model stack matched standalone XGBoost (0.8260 vs 0.8254, p = 1.0). Swarm optimizers (PSO, GWO, GA) over-fitted inner validation splits (0.007–0.010 gap) and failed to beat random search.
+1. **Class Weighting Degraded Macro-F1:** `balanced` sample weighting decreased macro-F1 (+0.009 improvement without weighting). SMOTE-NC oversampling degraded Reactive Arthritis precision to 0.52.
+2. **Engineered & Literature Features Added Zero Value:** Adding non-linear interaction terms, composite inflammatory sums, or missingness flags yielded no statistical gain (all 95% CIs cross zero). The 14 raw features proved superior.
+3. **Stacking & Swarm Ensembles Failed to Generalize:** A 5-model stack matched standalone XGBoost (0.8260 vs 0.8254, p = 1.0). Swarm optimizers (PSO, GWO, GA) over-fitted inner validation splits (0.007–0.010 gap) and failed to beat random search.
 
 <p align="center">
   <img src="results/natstack_convergence.png" width="70%" alt="Swarm Optimizer Convergence">
@@ -159,7 +160,7 @@ Pre-specified negative findings are critical to prevent wasteful modeling iterat
 
 ---
 
-## 🧩 How the Study Was Run
+## How the Study Was Run
 
 ```mermaid
 flowchart LR
@@ -192,7 +193,7 @@ flowchart LR
 
 ---
 
-## 📁 Repository
+## Repository Structure
 
 ```
 ├── notebooks/                       # 13 sequentially executable research notebooks
@@ -211,7 +212,7 @@ flowchart LR
 
 ---
 
-## 🧪 Reproduce
+## Reproduce
 
 Tested with **Python 3.13**.
 
@@ -234,7 +235,7 @@ pip install -r requirements.txt
 2. Execute notebooks sequentially (`01` through `12`). Notebook `02` constructs `data/processed/`.
 
 <details>
-<summary>⏱️ <strong>Execution Runtime Estimates</strong></summary>
+<summary><strong>Execution Runtime Estimates</strong></summary>
 
 * **Notebook 07 (Tuning):** ~60+ minutes (nested random search across trees).
 * **Notebooks 04, 05, and 08:** ~10 to 25 minutes each.
@@ -245,7 +246,7 @@ pip install -r requirements.txt
 
 ---
 
-## ⚠️ Limitations & Disclosures
+## Limitations & Disclosures
 
 1. **Simulated Benchmark Data:** Cohort missingness counts are exact integer percentages of total rows, and several features display artificial hard caps. Findings reflect benchmark properties, not clinical efficacy.
 2. **Prior Exploratory Test Exposure:** In exploratory iterations prior to this clean repository, baseline models were run on the test set. Final choices depended solely on cross-validation within the training pool, but this history is disclosed for transparency.
@@ -255,7 +256,7 @@ pip install -r requirements.txt
 
 ---
 
-## 👤 Author & License
+## Author & License
 
 <p align="left">
   <a href="https://github.com/prathamkariya">
