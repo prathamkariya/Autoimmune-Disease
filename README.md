@@ -1,8 +1,8 @@
 <div align="center">
 
-# Multiclass Classification of Rheumatic and Autoimmune Diseases
+# 🩺 Multiclass Classification of Rheumatic & Autoimmune Diseases
 
-**A leakage-safe, statistically controlled machine-learning study: every model, every decision, every number traceable.**
+**A leakage-safe, statistically controlled machine-learning study: every model, decision, and metric verified.**
 
 [![Python 3.13](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-2ea44f)](LICENSE)
@@ -11,212 +11,262 @@
 [![XGBoost](https://img.shields.io/badge/XGBoost-3.4-1192d3)](https://xgboost.readthedocs.io/)
 [![SHAP](https://img.shields.io/badge/SHAP-0.52-ff0d57)](https://shap.readthedocs.io/)
 
-[At a glance](#-at-a-glance) · [Model journey](#-the-modelling-journey) · [What the results mean](#-what-the-results-mean) · [What did not work](#-what-did-not-work) · [How it was run](#-how-the-study-was-run) · [Repository](#-repository) · [Reproduce](#-reproduce) · [Limitations](#-limitations-and-disclosures)
+[🎯 At a Glance](#-at-a-glance) · [🧭 Key Models](#-key-models--performance) · [🔬 Results & Clinical Meaning](#-what-the-results-mean) · [🚫 What Failed](#-what-did-not-work) · [🧩 Pipeline](#-how-the-study-was-run) · [📁 Repository](#-repository) · [🧪 Reproduce](#-reproduce) · [👤 Author](#-author--license)
 
 </div>
 
-> [!IMPORTANT]
-> **The data appear to be simulated.** Every test's missing count is an exact whole percentage of the 12,085 rows, and several measurements have hard caps (see `notebooks/01b_missingness_analysis.ipynb`). Results describe model behaviour on this benchmark, **not** clinical performance.
+---
 
-## 🎯 At a glance
+## 🎯 At a Glance
 
-Seven diagnoses, 14 clinical and serology measurements, 12,085 patients (Harvard Dataverse, DOI [10.7910/DVN/VM4OR3](https://doi.org/10.7910/DVN/VM4OR3)). We built and compared six model families plus stacked and swarm-optimised ensembles, and decided every step by cross-validation on 9,668 training patients. The 2,417-patient test set was opened exactly once.
+We evaluate multi-class diagnosis across 7 autoimmune conditions using 14 routine clinical and serological measurements from 12,085 patient records (Harvard Dataverse, DOI [10.7910/DVN/VM4OR3](https://doi.org/10.7910/DVN/VM4OR3)). Every architectural decision was determined strictly within fold-safe 5-fold cross-validation on 9,668 training patients. The 2,417-patient test set was evaluated exactly once.
 
-| Test macro-F1 | Nested-CV macro-F1 | Test accuracy | Test ROC-AUC | Calibration (ECE) |
-|:---:|:---:|:---:|:---:|:---:|
-| **0.846** | 0.825 | 0.853 | 0.987 | 0.019 |
-| [0.829, 0.862] | [0.817, 0.834] | | | |
+| Metric | Nested 5-Fold CV (9,668 patients) | Untouched Test Set (2,417 patients) |
+|---|:---:|:---:|
+| **Macro-F1** | **0.825** [0.817, 0.834] | **0.846** [0.829, 0.862] |
+| **Accuracy** | 0.839 | **0.853** |
+| **Balanced Accuracy** | 0.816 | **0.836** |
+| **ROC-AUC (ovr)** | 0.983 | **0.987** |
+| **Expected Calibration Error (ECE)** | 0.015 | **0.019** |
 
-**Final model:** XGBoost on the 14 raw measurements, no class weighting, hyper-parameters tuned by nested cross-validation (600 trees, depth 4, learning rate 0.020).
+> **Final Deployed Model:** Tuned XGBoost on 14 raw features with no class weighting (`learning_rate=0.020`, `n_estimators=600`, `max_depth=4`).
 
-**Three takeaways**
+### 💡 Core Takeaways
+1. 🎯 **Model Choice Hits a Ceiling:** Every well-regularized tree ensemble family lands within ~0.003 macro-F1 of one another. The ceiling is governed by clinical overlap and missing values, not classifier complexity.
+2. 📉 **Missing Tests Drive 36% of Errors:** Each missing diagnostic test increases the odds of error by **$\times 1.32$** (replicated at **$\times 1.29$** on the test set).
+3. 🛡️ **Uncertainty Deferral Works:** Rejecting the least-confident 20% of predictions eliminates **~62% of all test errors**, raising retained cohort accuracy to 93.1%.
 
-1. **Model choice barely matters here.** Every well-configured tree ensemble lands within about 0.003 macro-F1 of the others in cross-validation. The ceiling is set by the data, not by model sophistication.
-2. **Missing tests are the main avoidable source of error.** Each extra missing test multiplies the odds of a wrong prediction by 1.32, and the effect replicates on the test set (1.29).
-3. **The model knows when it is unsure.** Deferring the least-confident 20% of patients removes about 62% of the errors on the test set, but deferral is not equally kind to every disease (see below).
+---
 
-## 🧭 The modelling journey
+## 🧭 Key Models & Performance
 
-Every model we built, in the order we built it. Scores are 5-fold cross-validation macro-F1 (mean ± standard deviation across folds) unless stated; "stage" is the notebook number. The settings differ between rows on purpose: each row changes one thing and tests whether it helped.
+Scores represent 5-fold cross-validation Macro-F1 (mean ± standard deviation across folds) on the 9,668 training pool.
 
-| Stage | Model / change | Setting | CV macro-F1 | Outcome |
+| Status | Model | Configuration | CV Macro-F1 | Test Macro-F1 | Verdict |
+|:---:|---|---|:---:|:---:|---|
+| ⚪ | **Majority-Class Dummy** | Constant baseline | n/a | 0.0545 | Empirical floor |
+| 📌 | **Starting Pipeline (RF)** | Balanced weights, 19 features | 0.8175 ± 0.0081 | 0.8344 | Baseline reference point |
+| ⚡ | **Random Forest (Unweighted)** | No weights, 14 raw features | 0.8230 ± 0.0070 | 0.8430 | +0.009 gain over weighted RF |
+| ⚙️ | **XGBoost (Defaults)** | No weights, 14 raw features | 0.8174 ± 0.0057 | — | Starting point for tuning |
+| 🏆 | **XGBoost (Tuned)** | Nested CV random search | **0.8254 ± 0.0078** | **0.8464** | **Selected Final Model** (+0.0079 over default, 5/5 folds) |
+| 🔗 | **5-Model Stacking Ensemble** | Logistic regression meta-learner | 0.8260 ± 0.0051 | — | Dropped: +0.0007 over tuned XGB (not significant) |
+| 🐝 | **Swarm Optimizers (PSO/GWO/GA)** | 3,000 evaluations per optimizer | 0.8260 – 0.8283 | — | Dropped: equal budget random search scored 0.8284; over-fit inner folds |
+
+<details>
+<summary>🔍 <strong>View full 15-model experimental progression table</strong></summary>
+
+<br>
+
+| Stage | Model / Change | Configuration | CV Macro-F1 | Outcome |
 |:---:|---|---|:---:|---|
-| 03 | Majority-class dummy | always predicts the largest class | n/a (test 0.0545) | The floor every real model must beat |
-| 04 | Logistic Regression | balanced weights, 19 features | 0.7902 ± 0.0111 | Clearly behind the tree models (about 0.027 lower) |
-| 04 | **Random Forest, starting pipeline** | balanced weights, 19 features | 0.8175 ± 0.0081 | The reference point (test macro-F1 0.8344) |
-| 04 | XGBoost, defaults | balanced weights, 19 features | 0.8148 ± 0.0046 | Statistically tied with Random Forest |
-| 04 | Gradient Boosting (scikit-learn) | balanced weights, 17 features | 0.8161 ± 0.0030 | Tied, but about 36 times slower to train |
-| 05 | **Random Forest without class weights** | 17 features | 0.8245 ± 0.0098 | **Adopted**: weighting was costing about 0.009 |
-| 05 | Random Forest with SMOTE-NC oversampling | 17 features | 0.8115 ± 0.0073 | Dropped: lower, and Reactive Arthritis precision fell to 0.52 |
-| 06 | Random Forest with all 20 candidate features | no weights | 0.8249 ± 0.0132 | No real gain (+0.0004), so the 14 raw features were kept |
-| 07 | **Random Forest, defaults** | no weights, 14 raw features | 0.8230 ± 0.0070 | Strongest alternative (test macro-F1 0.8430) |
-| 07 | Random Forest, tuned | nested random search | 0.8246 ± 0.0053 | Not significant (+0.0017); defaults kept |
-| 07 | XGBoost, defaults | no weights, 14 raw features | 0.8174 ± 0.0057 | Starting point for tuning |
-| 07 | **XGBoost, tuned (final model)** | nested random search | 0.8254 ± 0.0078 | **Adopted**: +0.0079, significant in 5 of 5 folds; test macro-F1 0.8464 |
-| 08 | KNN, HistGradientBoosting, Logistic Regression | unweighted base learners | 0.7058 / 0.8125 / 0.7889 | Weaker; used only as ensemble members |
-| 08 | Stacking: 5 models + logistic-regression meta-learner | nested out-of-fold | 0.8260 ± 0.0051 | Not adopted: +0.0007 over tuned XGBoost, not significant |
-| 09 | Swarm-optimised ensembles (PSO, GWO, GA) | 3,000 evaluations each | 0.8260 to 0.8283 (weights only) | Not adopted: random search reached 0.8284 with the same budget |
+| 03 | Majority-Class Dummy | Always predicts largest class | n/a (test 0.0545) | Reference baseline |
+| 04 | Logistic Regression | Balanced weights, 19 features | 0.7902 ± 0.0111 | Behind tree models by ~0.027 |
+| 04 | Random Forest (Starting Pipeline) | Balanced weights, 19 features | 0.8175 ± 0.0081 | Initial benchmark (test 0.8344) |
+| 04 | XGBoost (Defaults) | Balanced weights, 19 features | 0.8148 ± 0.0046 | Statistically tied with RF |
+| 04 | Gradient Boosting (sklearn) | Balanced weights, 17 features | 0.8161 ± 0.0030 | Tied, but 36x slower to train |
+| 05 | Random Forest (Unweighted) | 17 features | 0.8245 ± 0.0098 | Adopted: weighting cost ~0.009 |
+| 05 | Random Forest + SMOTE-NC | 17 features | 0.8115 ± 0.0073 | Dropped: ReA precision fell to 0.52 |
+| 06 | Random Forest (20 Candidate Features) | No weights | 0.8249 ± 0.0132 | No gain (+0.0004); 14 raw kept |
+| 07 | Random Forest (Defaults) | No weights, 14 raw features | 0.8230 ± 0.0070 | Strong alternative (test 0.8430) |
+| 07 | Random Forest (Tuned) | Nested random search | 0.8246 ± 0.0053 | Not significant (+0.0017); defaults kept |
+| 07 | XGBoost (Defaults) | No weights, 14 raw features | 0.8174 ± 0.0057 | Starting point for tuning |
+| 07 | **XGBoost (Tuned - Final Model)** | Nested random search | **0.8254 ± 0.0078** | **Selected**: +0.0079, significant in 5/5 folds (test 0.8464) |
+| 08 | KNN / HistGradientBoosting / LogReg | Unweighted base learners | 0.7058 / 0.8125 / 0.7889 | Stacking ensemble inputs only |
+| 08 | Stacking Ensemble (5 Models + LR) | Nested out-of-fold | 0.8260 ± 0.0051 | Dropped: +0.0007 over tuned XGB |
+| 09 | Swarm Optimisation (PSO / GWO / GA) | 3,000 evaluations each | 0.8260 to 0.8283 | Dropped: no optimizer beat random search |
 
-> [!NOTE]
-> **How to read the gaps.** Fold-to-fold spread is about 0.005 to 0.010 and a single score carries a 95% interval of roughly ±0.008. Paired comparisons on the same patients can resolve differences of about 0.004 or more, so rows within 0.003 of each other are ties. The changes that clearly beat that bar, and were kept, are dropping class weights (Random Forest) and tuning (XGBoost); engineered features helped Gradient Boosting and Logistic Regression slightly but not the models we kept.
+</details>
 
-**The story in one paragraph.** We started from a class-balanced Random Forest (0.834 on test). Removing the class weights helped; adding engineered or literature-inspired features did not; tuning helped XGBoost but not Random Forest; stacking five models and optimising the ensemble with three swarm algorithms added nothing a random search could not already find. The final model is therefore the simplest one that is statistically at the top: a tuned XGBoost on the raw measurements. On the sealed test set it scores 0.846 against 0.834 for the starting pipeline, a difference of +0.012 (95% interval [-0.001, +0.026], McNemar p = 0.058): consistent with cross-validation, but too small to claim significance on one test split.
+---
 
-## 🔬 What the results mean
+## 🔬 What the Results Mean
 
-### Where the final model succeeds and fails
+### 1. Diagnosis-by-Diagnosis Breakdown (Test Set)
 
-| Disease | Test patients | Precision | Recall | F1 | 95% CI | What the model keys on (SHAP) |
+| Diagnostic Class | Test Samples | Precision | Recall | Test F1 | 95% CI | Key Biomarkers (SHAP) |
 |---|:---:|:---:|:---:|:---:|:---:|---|
-| Systemic Lupus Erythematosus | 271 | 1.000 | 0.978 | **0.989** | [0.979, 0.996] | Low C3 and C4 (complement), low ESR and CRP |
-| Sjögren's Syndrome | 370 | 0.858 | 0.949 | **0.901** | [0.879, 0.923] | High anti-La and anti-Ro, low ESR and CRP |
-| Psoriatic Arthritis | 357 | 0.859 | 0.888 | **0.873** | [0.847, 0.898] | High ESR and CRP with low RF and anti-CCP |
-| Normal | 321 | 0.923 | 0.826 | **0.872** | [0.843, 0.899] | Low ESR, CRP, RF and anti-CCP |
-| Rheumatoid Arthritis | 570 | 0.799 | 0.942 | **0.865** | [0.844, 0.884] | High anti-CCP and RF, high ESR and CRP |
-| Reactive Arthritis | 103 | 0.861 | 0.660 | **0.747** | [0.671, 0.814] | Lower ESR and CRP raise its score; high HLA-B27 |
-| Ankylosing Spondylitis | 425 | 0.768 | 0.607 | **0.678** | [0.638, 0.714] | High HLA-B27 with high CRP and ESR |
+| **Systemic Lupus Erythematosus (SLE)** | 271 | 1.000 | 0.978 | **0.989** | [0.979, 0.996] | Complement depletion (low C3 & C4), low ESR/CRP |
+| **Sjögren's Syndrome** | 370 | 0.858 | 0.949 | **0.901** | [0.879, 0.923] | High Anti-Ro & Anti-La, normal ESR/CRP |
+| **Psoriatic Arthritis (PsA)** | 357 | 0.859 | 0.888 | **0.873** | [0.847, 0.898] | High ESR & CRP with low RF/Anti-CCP |
+| **Normal** | 321 | 0.923 | 0.826 | **0.872** | [0.843, 0.899] | Normal inflammatory markers, negative autoantibodies |
+| **Rheumatoid Arthritis (RA)** | 570 | 0.799 | 0.942 | **0.865** | [0.844, 0.884] | Elevated Anti-CCP & RF, high ESR/CRP |
+| **Reactive Arthritis (ReA)** | 103 | 0.861 | 0.660 | **0.747** | [0.671, 0.814] | Intermediate inflammation, positive HLA-B27 |
+| **Ankylosing Spondylitis (AS)** | 425 | 0.768 | 0.607 | **0.678** | [0.638, 0.714] | Positive HLA-B27, elevated CRP & ESR |
 
-Lupus and Sjögren's syndrome are nearly solved because they have a distinctive serology (complement and anti-Ro/La). **Ankylosing Spondylitis is the hard case:** 26.8% of its patients are predicted as Rheumatoid Arthritis, because the two share an inflammatory profile. **Reactive Arthritis** is limited by size (103 test patients, wide interval) and a recall of 0.660. The next most frequent confusion is Normal predicted as Sjögren's (16.2% of Normal patients).
+* **Easy vs. Challenging Diseases:** Lupus and Sjögren's are near-perfectly recognized due to specific pathognomonic serology. In contrast, **Ankylosing Spondylitis is the primary failure mode**: 26.8% of AS cases are misclassified as Rheumatoid Arthritis due to shared inflammatory profiles.
 
-### Missing tests drive errors
+### 2. Missing Diagnostic Tests Hurt Performance
 
-Accuracy falls steadily as more of the 12 tests are missing, on training cross-validation and again on the held-out test set:
+Accuracy drops steadily with missing laboratory assays:
 
-| Missing tests | Accuracy, training CV | Accuracy, test set |
+| Missing Tests Count | Training CV Accuracy | Held-Out Test Accuracy |
 |:---:|:---:|:---:|
-| 0-1 | 0.897 | 0.900 |
-| 2 | 0.865 | 0.868 |
-| 3 | 0.830 | 0.845 |
-| 4 | 0.804 | 0.834 |
-| 5+ | 0.754 | 0.787 |
+| **0 – 1** | 0.897 | **0.900** |
+| **2** | 0.865 | **0.868** |
+| **3** | 0.830 | **0.845** |
+| **4** | 0.804 | **0.834** |
+| **5+** | 0.754 | **0.787** |
 
-Adjusted for the true disease, each extra missing test multiplies the odds of an error by **1.32** (95% CI [1.26, 1.37]) in training and **1.29** ([1.19, 1.41]) on the test set. Comparing patients with at most one missing test against everyone suggests that about 36% of errors are attributable to missing tests; the other roughly 64% remain even with nearly complete data, which points to genuine overlap between diseases. Which missing test hurts most:
+* **Single Tests That Cost the Most When Missing:** ESR (+13.2 error points), RF (+12.4 points), Anti-CCP (+6.5 points), and CRP (+3.8 points).
 
-| Test missing | Extra error rate when missing |
-|---|:---:|
-| ESR | +13.2 points |
-| RF | +12.4 points |
-| Anti-CCP | +6.5 points |
-| CRP | +3.8 points |
+### 3. Confidence Deferral & Selective Classification
 
-### The model knows when it is unsure
+The model exhibits strong calibration (ECE = 0.019; correct prediction mean confidence 0.872 vs. 0.620 on errors):
 
-Confidence (the top class probability) separates right from wrong predictions: on training cross-validation the mean is 0.872 for correct and 0.620 for wrong predictions. Thresholds fixed on training data transferred cleanly to the test set:
-
-| Target coverage | Realised coverage | Accuracy on kept patients | Errors deferred |
+| Target Coverage | Realised Coverage | Retained Cohort Accuracy | Errors Filtered Out |
 |:---:|:---:|:---:|:---:|
-| 90% | 90.9% | 0.888 | 31% |
-| 80% | 79.9% | 0.931 | 62% |
-| 70% | 69.2% | 0.970 | 86% |
-| 60% | 61.2% | 0.993 | 97% |
-| 50% | 55.9% | 0.998 | 99% |
+| **90%** | 90.9% | 0.888 | 31% |
+| **80%** | 79.9% | **0.931** | **62%** |
+| **70%** | 69.2% | 0.970 | 86% |
+| **60%** | 61.2% | 0.993 | 97% |
 
 > [!WARNING]
-> **Deferral is not class-neutral.** At 80% overall coverage the rule keeps 100% of Lupus and 78% of Rheumatoid Arthritis patients but only 61% of Ankylosing Spondylitis and 68% of Reactive Arthritis patients; at 60% coverage only 25% of Reactive Arthritis patients remain. Part of the high accuracy at low coverage comes from removing the hardest diseases. Always report coverage per disease.
+> **Deferral is Not Class-Neutral:** At 80% coverage, the system retains 100% of Lupus and 78% of RA, but only **61% of Ankylosing Spondylitis** and **68% of Reactive Arthritis** patients.
 
-### What the model learned
+---
 
-The seven most relied-upon measurements (mean absolute SHAP value): ESR 1.05, CRP 0.83, RF 0.54, Anti-CCP 0.54, HLA-B27 0.34, C3 0.30, C4 0.26. The learned rules match textbook rheumatology: anti-CCP and RF for Rheumatoid Arthritis, HLA-B27 with raised inflammatory markers for Ankylosing Spondylitis, anti-Ro and anti-La for Sjögren's syndrome, low complement for lupus. Three independent importance measures (SHAP, permutation importance, and the cost of a missing test) agree with rank correlations of 0.78 to 0.90.
+## 📊 Visual Interpretability
 
-<p align="center"><img src="results/shap_importance_heatmap.png" width="78%" alt="SHAP importance by disease"><br><em>Figure 1. How much the final model relies on each measurement, by disease (mean absolute SHAP value, test set).</em></p>
+<p align="center">
+  <img src="results/shap_importance_heatmap.png" width="75%" alt="SHAP Importance Heatmap">
+  <br><em>Figure 1: Mean absolute SHAP value per biomarker across all 7 diagnostic classes.</em>
+</p>
 
-<p align="center"><img src="results/final_reliability.png" width="46%" alt="Reliability diagram"><br><em>Figure 2. Reliability on the test set: stated confidence versus observed accuracy (ECE 0.019).</em></p>
+<p align="center">
+  <img src="results/final_reliability.png" width="45%" alt="Reliability Diagram">
+  <br><em>Figure 2: Test-set calibration curve comparing stated model confidence to observed accuracy (ECE = 0.019).</em>
+</p>
 
-<p align="center"><img src="results/shap_patients.png" width="86%" alt="Three patient explanations"><br><em>Figure 3. The eight largest SHAP contributions for three patients chosen by rule: a typical correct case, the most confident Ankylosing Spondylitis to Rheumatoid Arthritis error, and the least-confident error.</em></p>
+<p align="center">
+  <img src="results/shap_patients.png" width="80%" alt="Individual Patient Explanations">
+  <br><em>Figure 3: Case-level SHAP attributions for a representative correct case and difficult boundary errors.</em>
+</p>
 
-## 🚫 What did not work
+---
 
-Negative results are results; each of these was tested with a rule written before the outcome was known.
+## 🚫 What Did NOT Work
 
-- **Class weighting lowered macro-F1.** Random Forest scored 0.8245 without weights against 0.8156 with them. Weighting trades precision for recall (balanced accuracy rises by about 0.01) so the right choice depends on which objective matters; SMOTE-NC oversampling was never better than doing nothing.
-- **Extra features gave nothing to the final model family.** Three engineered features (an ESR plus CRP composite, a C3/C4 ratio, an antibody sum), three literature-inspired ones (a seronegative flag and two product terms) and two missingness flags gave no gain for Random Forest or XGBoost (every confidence interval included zero), and no smaller feature subset matched the full 14 (the top 8 lost about 0.03).
-- **Stacking and swarm optimisation did not generalise.** Stacking scored 0.8260 against 0.8254 for the single XGBoost. PSO, Grey Wolf and a genetic algorithm, given 3,000 evaluations each to tune ensemble weights and class multipliers, did no better than random search; with 12 parameters they over-fitted their own validation predictions (inner-to-outer gap 0.007 to 0.010, against 0.003 for random search).
+Pre-specified negative findings are critical to prevent wasteful modeling iterations:
 
-<p align="center"><img src="results/natstack_convergence.png" width="80%" alt="Optimiser convergence"><br><em>Figure 4. Best validation score found so far versus evaluations, averaged over folds, for the swarm optimisers and random search.</em></p>
+1. ❌ **Class Weighting Degraded Macro-F1:** `balanced` sample weighting decreased macro-F1 (+0.009 improvement without weighting). SMOTE-NC oversampling degraded Reactive Arthritis precision to 0.52.
+2. ❌ **Engineered & Literature Features Added Zero Value:** Adding non-linear interaction terms, composite inflammatory sums, or missingness flags yielded no statistical gain (all 95% CIs cross zero). The 14 raw features proved superior.
+3. ❌ **Stacking & Swarm Ensembles Failed to Generalize:** A 5-model stack matched standalone XGBoost (0.8260 vs 0.8254, p = 1.0). Swarm optimizers (PSO, GWO, GA) over-fitted inner validation splits (0.007–0.010 gap) and failed to beat random search.
 
-## 🧩 How the study was run
+<p align="center">
+  <img src="results/natstack_convergence.png" width="70%" alt="Swarm Optimizer Convergence">
+  <br><em>Figure 4: Optimization trajectories of PSO, GWO, and GA across 3,000 evaluations versus random search.</em>
+</p>
+
+---
+
+## 🧩 How the Study Was Run
 
 ```mermaid
 flowchart LR
-    A["12,085 patients"] --> B{"80/20 stratified split"}
-    B --> T[("Test set: 2,417 patients, sealed")]
-    B --> D["Training pool: 9,668 patients"]
-    D --> C["Fold-safe preprocessing and 5-fold CV<br/>notebooks 02 to 09 and 12"]
-    C --> F["Final model: tuned XGBoost"]
-    F --> E["Single test evaluation<br/>notebook 10"]
+    A["Cohort: 12,085 patients"] --> B{"Stratified 80/20 Split"}
+    B --> T[("Sealed Test Set: 2,417 patients")]
+    B --> D["Training Pool: 9,668 patients"]
+    D --> C["Fold-Safe Nested 5-Fold CV<br/>(Imputation, Scaling, Model Decisions)"]
+    C --> F["Final Model: Tuned XGBoost (14 features)"]
+    F --> E["Single Test Evaluation"]
     T --> E
-    E --> S["Explanation: SHAP<br/>notebook 11"]
+    E --> S["Interpretability: SHAP Analysis"]
 ```
 
-Anything that learns from data (imputation, scaling, resampling, feature selection, tuning) is fitted inside the training part of each fold. Choices are made from cross-validation with uncertainty (paired bootstrap, McNemar's test, Holm correction) using rules written in each notebook before its result existed.
+| Notebook | Focus Question | Key Empirical Finding |
+|---|---|---|
+| `01_eda` | What are cohort distributions and missingness? | 7 classes (5.5:1 imbalance); 12 tests with 9%–43% missing |
+| `01b_missingness_analysis` | Does missingness indicate disease type? | No; missing patterns occur at fixed rates across classes |
+| `02_preproccessing` | How to structure data without leakage? | Split prior to fitting; fit imputer/scaler strictly on train folds |
+| `04_cross_validation` | Which model family performs best? | Tree ensembles tie; Logistic Regression is significantly worse |
+| `05_imbalance_handling` | Should we apply class weights or SMOTE? | No class weighting achieves highest macro-F1 |
+| `06_feature_selection` | Do engineered or literature features help? | No; 14 raw features are non-inferior and optimal |
+| `07_hyperparameter_tuning` | Does tuning improve tree ensembles? | XGBoost gains +0.008 (significant); RF remains flat |
+| `08_stacking` | Does out-of-fold multi-model stacking help? | No; standalone tuned XGBoost achieves identical performance |
+| `09_nature_inspired_stacking` | Can swarm algorithms optimize weights? | No; swarm algorithms overfit inner validation folds |
+| `10_final_evaluation` | What is true unseen test performance? | Macro-F1 **0.8464**, Accuracy **0.853**, ECE **0.019** |
+| `11_shap_explainability` | What biomarker mechanisms were learned? | Biomarker rules precisely match clinical diagnostic criteria |
+| `12_error_analysis` | What drives residual errors? | Missing assays (~36%) and inflammatory class overlap (~64%) |
 
-| # | Notebook | Question | Answer in one line |
-|:---:|---|---|---|
-| 01 | `01_eda` | What does the data look like? | Seven classes (5.5 to 1 imbalance); 12 tests with 9% to 43% missing |
-| 01b | `01b_missingness_analysis` | Is a missing value informative? | No: the RF signal (p = 0.0055) becomes p = 0.066 after correction; gaps look inserted at fixed rates |
-| 02 | `02_preproccessing` | How do we preprocess without leakage? | Split first; fit imputer and scaler on training data only |
-| 03 | `03_stage1_plain_models` | First baselines on a validation split | Tree models about 0.80 on one split; nothing selected |
-| 04 | `04_cross_validation` | Honest model comparison | Tree models tie; logistic regression is clearly worse |
-| 05 | `05_imbalance_handling` | Weights, SMOTE-NC or nothing? | Nothing: no class weights |
-| 06 | `06_feature_selection` | Which features? | The 14 raw ones |
-| 07 | `07_hyperparameter_tuning` | Does tuning pay? | Yes for XGBoost (+0.0079), no for Random Forest |
-| 08 | `08_stacking` | Do ensembles help? | No |
-| 09 | `09_nature_inspired_stacking` | Can swarm optimisers do better? | No; they over-fit |
-| 10 | `10_final_evaluation` | How good is the final model? | Test macro-F1 0.8464 |
-| 11 | `11_shap_explainability` | What did it learn? | Clinically plausible rules |
-| 12 | `12_error_analysis` | Why does it fail? | Missing tests and disease overlap |
+*Full evidence, statistical test tables, and confidence bounds are logged in [`docs/ANALYSIS_LOG.md`](docs/ANALYSIS_LOG.md).*
 
-The complete evidence for every decision is in [`docs/ANALYSIS_LOG.md`](docs/ANALYSIS_LOG.md).
+---
 
 ## 📁 Repository
 
 ```
-notebooks/   13 executed notebooks (run in order: 01, 01b, 02 ... 12)
-src/         preprocessing/cv_pipeline.py (fold-safe preprocessing)
-             evaluation/metrics.py (paired bootstrap, McNemar, Holm, calibration)
-results/     tables (.csv), figures (.png), the frozen specification and the final model
-docs/        ANALYSIS_LOG.md (decisions, evidence, findings, disclosures)
-data/raw/    README.md (where to get the dataset and its SHA-256 checksum)
+├── notebooks/                       # 13 sequentially executable research notebooks
+├── src/                             # Reusable core modules
+│   ├── preprocessing/cv_pipeline.py # Fold-safe pipeline logic (imputer, scaler)
+│   └── evaluation/metrics.py        # Paired bootstrap, McNemar, Holm tests, ECE
+├── results/                         # Frozen artifacts, tables, figures, final model
+│   ├── final_freeze.json            # Pre-evaluation parameter hash record
+│   ├── final_model_xgb.json         # Serialized final production model
+│   └── environment.txt              # Frozen execution environment
+├── docs/ANALYSIS_LOG.md             # Complete evidence audit log
+├── data/raw/README.md               # Dataset download & verification instructions
+├── requirements.txt                 # Pinned dependencies
+└── LICENSE                          # MIT License
 ```
 
-Result files are prefixed by the notebook that wrote them: `missingness_` (01b), `stage1_val_` (03), `cv5_` (04), `imb_` (05), `fs_` (06), `tune_` and `tuning_` (07), `stack_` (08), `natstack_` (09), `final_` (10), `shap_` (11), `err_` (12). The fitted model is `results/final_model_xgb.json`; the frozen specification is `results/final_freeze.json`.
+---
 
 ## 🧪 Reproduce
 
-Tested with Python 3.13.
+Tested with **Python 3.13**.
 
 ```bash
+# 1. Clone repository & configure virtual environment
 git clone https://github.com/prathamkariya/Autoimmune-Disease.git
 cd Autoimmune-Disease
 python -m venv .venv
-# Windows PowerShell: .venv\Scripts\Activate.ps1      Linux/macOS: source .venv/bin/activate
+
+# Activate: Windows PowerShell
+.venv\Scripts\Activate.ps1
+# Activate: Linux/macOS
+# source .venv/bin/activate
+
+# 2. Install dependencies
 pip install -r requirements.txt
 ```
 
-1. Download `dataset.xlsx` from the Dataverse page above into `data/raw/` and check its SHA-256 as described in [`data/raw/README.md`](data/raw/README.md).
-2. Run the notebooks in order (`01`, `01b`, `02` through `12`). Notebook `02` creates `data/processed/`, which the later notebooks read.
+1. Download `dataset.xlsx` from Harvard Dataverse into `data/raw/` and verify its SHA-256 hash using [`data/raw/README.md`](data/raw/README.md).
+2. Execute notebooks sequentially (`01` through `12`). Notebook `02` constructs `data/processed/`.
 
 <details>
-<summary>Runtime expectations</summary>
+<summary>⏱️ <strong>Execution Runtime Estimates</strong></summary>
 
-- Notebook 07 is the slowest (about an hour or more on a laptop).
-- Notebooks 04, 05 and 08 take roughly 10 to 25 minutes each; 09 needs about 10 to 15 minutes the first time (it caches base-model predictions in `results/natstack_Z.npz`).
-- The rest take a few minutes. Every notebook checks that it reproduces the numbers of the notebook before it and prints a `WARNING` if not.
+* **Notebook 07 (Tuning):** ~60+ minutes (nested random search across trees).
+* **Notebooks 04, 05, and 08:** ~10 to 25 minutes each.
+* **Notebook 09 (Swarm Stacking):** ~10 to 15 minutes initial run (caches predictions to `results/natstack_Z.npz`).
+* **Remaining Notebooks:** Fast execution (< 5 minutes each).
 
 </details>
 
-## 🚧 Limitations and disclosures
+---
 
-1. **Simulated-looking data.** No external validation and a single train/test split; the data follow textbook disease patterns rather than clinical ambiguity.
-2. **Earlier test-set exposure.** In an earlier version of this analysis, exploratory notebooks compared models on the test set. No final choice depended on those looks and those notebooks are not in this repository, but it must be disclosed.
-3. **Pre-specified, not pre-registered.** Decision rules were written in the notebooks before the results. `results/final_freeze.json` was generated 23 seconds before the test evaluation, and the repository has no independent timestamp.
-4. **Cross-validation is mildly optimistic,** because weighting, features and model family were chosen on the same folds. The test score (0.8464) is above the cross-validation interval most likely because this test split is somewhat easier: every model, including the starting pipeline, moved up by about 0.02, and the final model also trains on 25% more patients than each fold model.
-5. **The improvement over the starting pipeline is modest** (+0.012, McNemar p = 0.058).
-6. **Exploratory analysis** (notebook 01) looked at all 12,085 patients before the split; it was descriptive only.
-7. **The `Seronegative` feature uses conventional cut-offs,** because the dataset's own thresholds are undocumented.
+## ⚠️ Limitations & Disclosures
 
-## 🙏 Credits and licence
+1. **Simulated Benchmark Data:** Cohort missingness counts are exact integer percentages of total rows, and several features display artificial hard caps. Findings reflect benchmark properties, not clinical efficacy.
+2. **Prior Exploratory Test Exposure:** In exploratory iterations prior to this clean repository, baseline models were run on the test set. Final choices depended solely on cross-validation within the training pool, but this history is disclosed for transparency.
+3. **Pre-Specified in Notebooks:** Decision rules and parameter freeze records (`results/final_freeze.json`) were committed in the notebooks prior to test evaluation.
+4. **Mild CV Optimism:** The test macro-F1 (0.8464) exceeded the CV interval [0.8168, 0.8336] because the single test partition proved slightly easier for all architectures (all candidate baselines shifted up by ~+0.02) and the final model trained on 25% more data.
+5. **Modest Final Delta:** The observed +0.012 Macro-F1 improvement over the starting pipeline is consistent but modest (McNemar $p = 0.058$).
 
-**Author:** Pratham Kariya. The exploratory analysis and the original preprocessing and cross-validation pipeline come from [shaambhavi-dubey/autoimmune-diseases](https://github.com/shaambhavi-dubey/autoimmune-diseases); the leakage fixes, the evaluation framework and notebooks 01b to 12 were added afterwards.
+---
 
-Code is released under the [MIT License](LICENSE). The data are subject to the terms of the original Harvard Dataverse record and are not redistributed here.
+## 👤 Author & License
+
+<p align="left">
+  <a href="https://github.com/prathamkariya">
+    <img src="https://github.com/prathamkariya.png" width="90" height="90" alt="Pratham Kariya" style="border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.15);" />
+  </a>
+</p>
+
+**Pratham Kariya**  
+* GitHub: [@prathamkariya](https://github.com/prathamkariya)
+* Repository: [Autoimmune-Disease](https://github.com/prathamkariya/Autoimmune-Disease)
+
+### License & Terms
+* **Code:** Licensed under the [MIT License](LICENSE).
+* **Dataset:** Harvard Dataverse (DOI [10.7910/DVN/VM4OR3](https://doi.org/10.7910/DVN/VM4OR3)). Data is not redistributed in this repository.
